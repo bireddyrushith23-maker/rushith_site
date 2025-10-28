@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Jarvis Chat</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+<style>
+body {
+    margin: 0;
+    font-family: 'Orbitron', sans-serif;
+    background: #0a0a0a;
+    color: #00ffea;
+    overflow: hidden;
+    position: relative;
+}
+
+/* Neon moving grid */
+body::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(90deg, rgba(0,255,234,0.2) 1px, transparent 1px),
+                linear-gradient(rgba(0,255,234,0.2) 1px, transparent 1px);
+    background-size: 40px 40px;
+    animation: moveGrid 20s linear infinite;
+    z-index: 0;
+}
+@keyframes moveGrid {
+    from { transform: translate(0,0); }
+    to { transform: translate(-40px,-40px); }
+}
+
+/* Chat container */
+#container {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    height: 100vh;
+}
+
+/* Contacts panel */
+#contacts {
+    width: 240px;
+    background: #001f1f;
+    padding: 20px;
+    box-shadow: 2px 0 30px #00ffea;
+    overflow-y: auto;
+}
+.contactBtn {
+    display: block;
+    margin: 10px 0;
+    padding: 12px;
+    background: #002b2b;
+    border: none;
+    color: #00ffea;
+    width: 100%;
+    cursor: pointer;
+    border-radius: 12px;
+    transition: 0.3s;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+.contactBtn:hover {
+    background: #00fff5;
+    color: #000;
+    box-shadow: 0 0 15px #00ffea;
+}
+
+/* Main chat panel */
+#main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 25px;
+    background: #001111;
+    box-shadow: inset 0 0 30px #00ffea;
+}
+#messages {
+    flex: 1;
+    background: #001a1a;
+    padding: 15px;
+    overflow-y: auto;
+    border-radius: 15px;
+    margin-bottom: 15px;
+    box-shadow: inset 0 0 15px #00fff5;
+}
+.msg {
+    margin-bottom: 12px;
+    padding: 12px;
+    border-radius: 18px;
+    max-width: 70%;
+    animation: fadein 0.5s;
+    word-wrap: break-word;
+    font-size: 1rem;
+}
+.msg.you {
+    background: #00ffea;
+    color: #000;
+    margin-left: auto;
+    text-align: right;
+    box-shadow: 0 0 10px #00ffea;
+}
+.msg.other {
+    background: #002b2b;
+    color: #00ffea;
+    margin-right: auto;
+    text-align: left;
+    box-shadow: 0 0 8px #00fff5;
+}
+@keyframes fadein {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Input and buttons */
+#msgInput {
+    padding: 12px;
+    font-family: Orbitron;
+    width: 60%;
+    background: #002b2b;
+    color: #00ffea;
+    border: none;
+    border-radius: 12px;
+    outline: none;
+}
+#sendBtn, #voiceBtn {
+    padding: 12px;
+    font-family: Orbitron;
+    background: #00ffea;
+    color: #000;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: 0.3s;
+    font-weight: bold;
+}
+#sendBtn:hover, #voiceBtn:hover {
+    box-shadow: 0 0 20px #00ffea;
+}
+
+/* Hidden admin section */
+#adminPanel {
+    display: none;
+    background: #002b2b;
+    padding: 10px;
+    border-radius: 10px;
+    color: #00ffea;
+    margin-top: 10px;
+    box-shadow: 0 0 10px #00fff5;
+}
+</style>
+</head>
+<body>
+
+<div id="container">
+  <div id="contacts">
+    <h4>Contacts</h4>
+    <div id="contactList"></div>
+    <div id="adminPanel">
+      <h4>🧠 Admin Tools</h4>
+      <p>Welcome, Rushith! You have full access.</p>
+    </div>
+  </div>
+  <div id="main">
+    <h4>Chat with <span id="chatWith">(none)</span></h4>
+    <div id="messages"></div>
+    <div style="display:flex; gap:10px;">
+      <input id="msgInput" placeholder="Type message...">
+      <button id="sendBtn">Send</button>
+      <button id="voiceBtn" onclick="startVoice()">🎤 Speak</button>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<script>
+// --- Firebase setup ---
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  databaseURL: "https://YOUR_PROJECT.firebaseio.com",
+  projectId: "YOUR_PROJECT",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "SENDER_ID",
+  appId: "APP_ID"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// --- Encryption ---
+function encryptText(txt, key){ return CryptoJS.AES.encrypt(txt, key).toString(); }
+function decryptText(txt, key){
+  try{ return CryptoJS.AES.decrypt(txt, key).toString(CryptoJS.enc.Utf8) || null; }
+  catch{ return null; }
+}
+
+// --- Variables ---
+let user = "Guest";
+let chatWith = null;
+let admin = false;
+
+// Easter egg voices
+const voices = {
+  normal: speechSynthesis.getVoices()[0],
+  jarvis: speechSynthesis.getVoices().find(v=>v.name.includes("Zira")) || null,
+  ironman: speechSynthesis.getVoices().find(v=>v.name.includes("David")) || null
+};
+
+// Speak function
+function speak(text, type="normal"){
+  let utter = new SpeechSynthesisUtterance(text);
+  if(voices[type]) utter.voice = voices[type];
+  utter.pitch = type==="ironman"?0.8:1;
+  speechSynthesis.speak(utter);
+}
+
+// Chat key handling
+function getChatKey(contact){
+  const keyName = `chat_key_${user}_${contact}`;
+  let key = sessionStorage.getItem(keyName);
+  if(!key) key = prompt(`Enter secret key for chat with ${contact}`) || "default";
+  sessionStorage.setItem(keyName, key);
+  return key;
+}
+
+// Load contacts
+function loadContacts(){
+  db.ref('users').once('value', s=>{
+    let html="";
+    if(s.exists()){
+      Object.keys(s.val()).forEach(u=>{
+        if(u!==user) html+=`<button class="contactBtn" onclick="startChat('${u}')">${u}</button>`;
+      });
+    }
+    document.getElementById("contactList").innerHTML=html;
+  });
+}
+
+// Start chat
+function startChat(contact){
+  chatWith = contact;
+  document.getElementById("chatWith").innerText=contact;
+  document.getElementById("messages").innerHTML="";
+  loadMessages();
+}
+
+// Load messages
+function loadMessages(){
+  db.ref("messages").orderByChild("timestamp").on("value", snap=>{
+    let html="";
+    const key = getChatKey(chatWith);
+    snap.forEach(msg=>{
+      let m = msg.val();
+      if((m.sender===user && m.recipient===chatWith)||(m.sender===chatWith && m.recipient===user)){
+        let cls = m.sender===user?"you":"other";
+        let txt = decryptText(m.content,key) || "[encrypted]";
+        html+=`<div class="msg ${cls}"><b>${m.sender}</b>: ${txt}</div>`;
+      }
+    });
+    document.getElementById("messages").innerHTML=html;
+  });
+}
+
+// Send
+document.getElementById("sendBtn").onclick=()=>{
+  const text = document.getElementById("msgInput").value.trim();
+  if(!text||!chatWith) return;
+  if(text==="iamironmanbutrushithisbetter"){
+    admin=true;
+    document.getElementById("adminPanel").style.display="block";
+    speak("Welcome back, Admin Rushith.", "ironman");
+    document.getElementById("msgInput").value="";
+    return;
+  }
+  const key=getChatKey(chatWith);
+  const payload=encryptText(text,key);
+  db.ref("messages").push({sender:user,recipient:chatWith,content:payload,timestamp:Date.now()});
+  document.getElementById("msgInput").value="";
+  if(text.toLowerCase().includes("jarvis")) speak("At your service, sir.", "jarvis");
+};
+
+// Voice recognition
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+if(SpeechRecognition){
+  const recognition = new SpeechRecognition();
+  recognition.lang="en-US";
+  function startVoice(){ recognition.start(); }
+  recognition.onresult = e=>{
+    const spoken = e.results[0][0].transcript;
+    document.getElementById("msgInput").value=spoken;
+    if(spoken.toLowerCase().startsWith("send ")){
+      const parts = spoken.split(" ");
+      const userTo = parts[1];
+      const message = parts.slice(2).join(" ");
+      chatWith=userTo;
+      loadMessages();
+      document.getElementById("msgInput").value=message;
+      document.getElementById("sendBtn").click();
+      speak(`Message sent to ${userTo}`, "jarvis");
+    } else document.getElementById("sendBtn").click();
+  };
+  window.startVoice=startVoice;
+}
+
+// On load
+window.onload=()=>{
+  const saved=sessionStorage.getItem("jarvis_user");
+  if(saved){user=saved;}
+  else {
+    user=prompt("Enter your username:","Guest")||"Guest";
+    sessionStorage.setItem("jarvis_user",user);
+    db.ref("users/"+user).set(true);
+  }
+  loadContacts();
+};
+</script>
+</body>
+</html>
