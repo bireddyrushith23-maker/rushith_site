@@ -2,313 +2,202 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Jarvis Chat</title>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
 <style>
-body {
-    margin: 0;
-    font-family: 'Orbitron', sans-serif;
-    background: #0a0a0a;
-    color: #00ffea;
-    overflow: hidden;
-    position: relative;
-}
-
-/* Neon moving grid */
-body::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 200%;
-    height: 200%;
-    background: linear-gradient(90deg, rgba(0,255,234,0.2) 1px, transparent 1px),
-                linear-gradient(rgba(0,255,234,0.2) 1px, transparent 1px);
-    background-size: 40px 40px;
-    animation: moveGrid 20s linear infinite;
-    z-index: 0;
-}
-@keyframes moveGrid {
-    from { transform: translate(0,0); }
-    to { transform: translate(-40px,-40px); }
-}
-
-/* Chat container */
-#container {
-    position: relative;
-    z-index: 1;
-    display: flex;
+  * {margin: 0; padding: 0; box-sizing: border-box;}
+  body {
     height: 100vh;
-}
-
-/* Contacts panel */
-#contacts {
-    width: 240px;
-    background: #001f1f;
-    padding: 20px;
-    box-shadow: 2px 0 30px #00ffea;
-    overflow-y: auto;
-}
-.contactBtn {
-    display: block;
-    margin: 10px 0;
-    padding: 12px;
-    background: #002b2b;
-    border: none;
-    color: #00ffea;
-    width: 100%;
-    cursor: pointer;
-    border-radius: 12px;
-    transition: 0.3s;
-    font-weight: bold;
-    text-transform: uppercase;
-}
-.contactBtn:hover {
-    background: #00fff5;
-    color: #000;
-    box-shadow: 0 0 15px #00ffea;
-}
-
-/* Main chat panel */
-#main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    padding: 25px;
-    background: #001111;
-    box-shadow: inset 0 0 30px #00ffea;
-}
-#messages {
-    flex: 1;
-    background: #001a1a;
-    padding: 15px;
-    overflow-y: auto;
-    border-radius: 15px;
-    margin-bottom: 15px;
-    box-shadow: inset 0 0 15px #00fff5;
-}
-.msg {
-    margin-bottom: 12px;
-    padding: 12px;
-    border-radius: 18px;
-    max-width: 70%;
-    animation: fadein 0.5s;
-    word-wrap: break-word;
-    font-size: 1rem;
-}
-.msg.you {
-    background: #00ffea;
-    color: #000;
-    margin-left: auto;
-    text-align: right;
-    box-shadow: 0 0 10px #00ffea;
-}
-.msg.other {
-    background: #002b2b;
-    color: #00ffea;
-    margin-right: auto;
-    text-align: left;
-    box-shadow: 0 0 8px #00fff5;
-}
-@keyframes fadein {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* Input and buttons */
-#msgInput {
-    padding: 12px;
-    font-family: Orbitron;
-    width: 60%;
-    background: #002b2b;
-    color: #00ffea;
-    border: none;
-    border-radius: 12px;
-    outline: none;
-}
-#sendBtn, #voiceBtn {
-    padding: 12px;
-    font-family: Orbitron;
-    background: #00ffea;
-    color: #000;
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: 0.3s;
-    font-weight: bold;
-}
-#sendBtn:hover, #voiceBtn:hover {
-    box-shadow: 0 0 20px #00ffea;
-}
-
-/* User prompt overlay */
-#namePrompt {
+    background: radial-gradient(circle, #000010 40%, #000015 100%);
+    color: #00ffff;
+    font-family: 'Orbitron', sans-serif;
+    overflow: hidden;
+  }
+  .grid {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.95);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    color: #00ffea;
-    z-index: 999;
-}
-#nameInput {
-    padding: 10px;
-    border-radius: 10px;
-    border: none;
-    font-size: 18px;
-    width: 250px;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: linear-gradient(90deg, rgba(0,255,255,0.2) 1px, transparent 1px),
+                linear-gradient(rgba(0,255,255,0.2) 1px, transparent 1px);
+    background-size: 40px 40px;
+    animation: moveGrid 6s linear infinite;
+    z-index: 0;
+  }
+  @keyframes moveGrid {
+    from {background-position: 0 0, 0 0;}
+    to {background-position: 40px 40px, 40px 40px;}
+  }
+  .chat-container {
+    position: relative;
+    z-index: 2;
+    width: 90%;
+    max-width: 600px;
+    margin: 100px auto;
+    padding: 15px;
+    border: 2px solid #00ffff;
+    border-radius: 15px;
+    background: rgba(0,0,0,0.7);
+    box-shadow: 0 0 20px #00ffff;
+  }
+  h1 {
     text-align: center;
-    background: #002b2b;
-    color: #00ffea;
     margin-bottom: 10px;
-}
-#saveNameBtn {
-    padding: 10px 20px;
-    background: #00ffea;
+  }
+  #chat-box {
+    height: 300px;
+    overflow-y: auto;
+    border: 1px solid #00ffff;
+    border-radius: 10px;
+    padding: 10px;
+    background: rgba(0,0,0,0.6);
+  }
+  .input-area {
+    display: flex;
+    margin-top: 10px;
+  }
+  input {
+    flex: 1;
+    padding: 8px;
+    background: transparent;
+    border: 1px solid #00ffff;
+    color: #00ffff;
+    border-radius: 5px;
+  }
+  button {
+    background: #00ffff;
     border: none;
     color: #000;
-    border-radius: 10px;
-    cursor: pointer;
     font-weight: bold;
-}
+    padding: 8px 15px;
+    border-radius: 5px;
+    margin-left: 5px;
+  }
+  #settings {
+    position: absolute;
+    top: 10px; right: 15px;
+    cursor: pointer;
+    font-size: 20px;
+    z-index: 3;
+  }
+  .settings-menu {
+    display: none;
+    position: absolute;
+    right: 15px;
+    top: 40px;
+    background: rgba(0,0,0,0.8);
+    border: 1px solid #00ffff;
+    border-radius: 10px;
+    padding: 10px;
+    width: 200px;
+    z-index: 4;
+  }
+  .settings-menu label {
+    display: block;
+    margin: 8px 0;
+  }
+  @media (max-width: 600px) {
+    .chat-container {
+      width: 95%;
+      margin: 80px auto;
+      padding: 10px;
+    }
+    #chat-box {height: 250px;}
+  }
 </style>
 </head>
 <body>
 
-<div id="namePrompt">
-  <h2>Enter your name to start</h2>
-  <input id="nameInput" placeholder="Your name...">
-  <button id="saveNameBtn">Continue</button>
+<div class="grid"></div>
+
+<div id="settings">⚙️</div>
+<div class="settings-menu" id="settingsMenu">
+  <label><input type="checkbox" id="voiceToggle"> Voice Command</label>
+  <label><input type="color" id="bgColor" value="#000010"> Background</label>
 </div>
 
-<div id="container" style="display:none;">
-  <div id="contacts">
-    <h4>Contacts</h4>
-    <div id="contactList"></div>
-  </div>
-  <div id="main">
-    <h4>Chat with <span id="chatWith">(none)</span></h4>
-    <div id="messages"></div>
-    <div style="display:flex; gap:10px;">
-      <input id="msgInput" placeholder="Type message...">
-      <button id="sendBtn">Send</button>
-      <button id="voiceBtn" onclick="startVoice()">🎤 Speak</button>
-    </div>
+<div class="chat-container">
+  <h1>J.A.R.V.I.S Interface</h1>
+  <div id="chat-box"></div>
+  <div class="input-area">
+    <input id="userInput" type="text" placeholder="Type or speak...">
+    <button onclick="sendMessage()">Send</button>
   </div>
 </div>
-
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <script>
-// --- Firebase setup ---
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  databaseURL: "https://YOUR_PROJECT.firebaseio.com",
-  projectId: "YOUR_PROJECT",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "SENDER_ID",
-  appId: "APP_ID"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+  // === Name memory ===
+  let username = localStorage.getItem("jarvisUser");
+  if (!username) {
+    username = prompt("Enter your name:");
+    localStorage.setItem("jarvisUser", username);
+  }
 
-let user = localStorage.getItem("chatUser") || null;
-let chatWith = null;
+  const chatBox = document.getElementById("chat-box");
+  const synth = window.speechSynthesis;
+  const voiceToggle = document.getElementById("voiceToggle");
+  const bgColor = document.getElementById("bgColor");
+  const settingsMenu = document.getElementById("settingsMenu");
+  const settingsBtn = document.getElementById("settings");
+  
+  settingsBtn.onclick = () => {
+    settingsMenu.style.display = settingsMenu.style.display === "block" ? "none" : "block";
+  };
 
-const namePrompt = document.getElementById("namePrompt");
-const container = document.getElementById("container");
+  bgColor.oninput = () => {
+    document.body.style.background = bgColor.value;
+  };
 
-// Show name prompt if user not saved
-if (!user) {
-  namePrompt.style.display = "flex";
-} else {
-  container.style.display = "flex";
-  loadContacts();
-}
+  function speak(text) {
+    if (!voiceToggle.checked) return;
+    const utter = new SpeechSynthesisUtterance(text);
+    synth.speak(utter);
+  }
 
-document.getElementById("saveNameBtn").onclick = function() {
-  const name = document.getElementById("nameInput").value.trim();
-  if (!name) return alert("Please enter your name!");
-  user = name;
-  localStorage.setItem("chatUser", name);
-  namePrompt.style.display = "none";
-  container.style.display = "flex";
-  loadContacts();
-};
+  function sendMessage() {
+    const input = document.getElementById("userInput");
+    const msg = input.value.trim();
+    if (msg === "") return;
+    appendMessage(username, msg);
+    input.value = "";
+    setTimeout(() => {
+      const reply = getJarvisReply(msg);
+      appendMessage("Jarvis", reply);
+      speak(reply);
+    }, 600);
+  }
 
-// Load contacts
-function loadContacts(){
-    db.ref('users').once('value', snap=>{
-        let html='';
-        let users=[];
-        if(snap.exists()) users=Object.keys(snap.val());
-        users.forEach(u=>{
-            if(u!==user) html+=`<button class="contactBtn" onclick="startChat('${u}')">${u}</button>`;
-        });
-        document.getElementById('contactList').innerHTML=html;
-    });
-}
+  function appendMessage(sender, message) {
+    const div = document.createElement("div");
+    div.innerHTML = `<b>${sender}:</b> ${message}`;
+    chatBox.appendChild(div);
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
 
-// Start chat
-function startChat(contact){
-    chatWith = contact;
-    document.getElementById('chatWith').innerText = contact;
-    document.getElementById('messages').innerHTML = '';
-    loadMessages();
-}
+  function getJarvisReply(msg) {
+    msg = msg.toLowerCase();
+    if (msg.includes("hello")) return `Hello ${username}, how are you?`;
+    if (msg.includes("time")) return `The current time is ${new Date().toLocaleTimeString()}`;
+    if (msg.includes("date")) return `Today's date is ${new Date().toLocaleDateString()}`;
+    if (msg.includes("your name")) return "I am J.A.R.V.I.S, your personal assistant.";
+    return "I'm not sure about that yet, but I'm learning.";
+  }
 
-// Load messages
-function loadMessages(){
-    db.ref('messages').orderByChild('timestamp').on('value', snap=>{
-        let html='';
-        snap.forEach(msg=>{
-            let m=msg.val();
-            if(m.sender===user && m.recipient===chatWith || m.sender===chatWith && m.recipient===user){
-                let cls = m.sender===user?'you':'other';
-                html+=`<div class="msg ${cls}"><b>${m.sender}</b>: ${m.content}</div>`;
-            }
-        });
-        document.getElementById('messages').innerHTML=html;
-        document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
-    });
-}
+  // === Voice input ===
+  const recognition = ("SpeechRecognition" in window || "webkitSpeechRecognition" in window)
+    ? new (window.SpeechRecognition || window.webkitSpeechRecognition)()
+    : null;
 
-// Send message
-document.getElementById('sendBtn').onclick=function(){
-    let text=document.getElementById('msgInput').value.trim();
-    if(!text || !chatWith) return;
-    let ts=Date.now();
-    db.ref('messages').push({
-        sender: user,
-        recipient: chatWith,
-        content: text,
-        timestamp: ts
-    });
-    document.getElementById('msgInput').value='';
-};
+  if (recognition) {
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      document.getElementById("userInput").value = transcript;
+      sendMessage();
+    };
+  }
 
-// Voice recognition
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-if(SpeechRecognition){
-    const recognition = new SpeechRecognition();
-    recognition.continuous = false;
-    recognition.lang = 'en-US';
-    window.startVoice = () => recognition.start();
-    recognition.onresult = function(event){
-        const spokenText = event.results[0][0].transcript;
-        document.getElementById('msgInput').value = spokenText;
-        document.getElementById('sendBtn').click();
-    }
-    recognition.onerror = (e)=>console.log('Voice recognition error:', e.error);
-}
+  document.getElementById("userInput").addEventListener("keydown", e => {
+    if (e.key === "Enter") sendMessage();
+  });
 </script>
 </body>
 </html>
